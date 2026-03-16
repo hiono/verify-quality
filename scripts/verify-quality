@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# verify-quality - Unified quality gate combining cmake-skill and cpp-lint
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${1:-.}"
+PRESET="${2:-linux-release}"
+SCOPE="${3:-changed}"
+
+cd "$PROJECT_ROOT"
+
+# Create unified quality reports directory
+QUALITY_DIR="quality_reports"
+mkdir -p "$QUALITY_DIR"
+
+# Run cmake-skill pipeline
+echo "=== Running cmake-skill pipeline ==="
+cmake-skill pipeline --preset "$PRESET" --output-dir cmake_reports || true
+
+# Run cpp-lint
+echo "=== Running cpp-lint ==="
+cpp-lint "$SCOPE" || true
+
+# Copy reports to quality directory
+cp -f cmake_reports/cmake_report.json "$QUALITY_DIR/" 2>/dev/null || true
+cp -f cmake_reports/cmake_report.md "$QUALITY_DIR/" 2>/dev/null || true
+cp -f cpp_lint_reports/lint_report.json "$QUALITY_DIR/" 2>/dev/null || true
+cp -f cpp_lint_reports/lint_report.md "$QUALITY_DIR/" 2>/dev/null || true
+
+# Generate consolidated report
+echo "# Quality Gate Report" > "$QUALITY_DIR/quality_gate_report.md"
+echo "" >> "$QUALITY_DIR/quality_gate_report.md"
+echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$QUALITY_DIR/quality_gate_report.md"
+echo "" >> "$QUALITY_DIR/quality_gate_report.md"
+
+# Append cmake results
+if [ -f "cmake_report.md" ]; then
+    echo "## CMake Build & Lint" >> "$QUALITY_DIR/quality_gate_report.md"
+    cat "cmake_report.md" >> "$QUALITY_DIR/quality_gate_report.md"
+    echo "" >> "$QUALITY_DIR/quality_gate_report.md"
+fi
+
+# Append cpp lint results
+if [ -f "lint_report.md" ]; then
+    echo "## C++ Lint & Format" >> "$QUALITY_DIR/quality_gate_report.md"
+    cat "lint_report.md" >> "$QUALITY_DIR/quality_gate_report.md"
+fi
+
+echo "=== Quality gate report saved to $QUALITY_DIR/quality_gate_report.md ==="
