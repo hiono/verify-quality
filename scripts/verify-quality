@@ -22,11 +22,10 @@ if [ -f ".cmake-skill-manifest.json" ]; then
     echo "  Found manifest: .cmake-skill-manifest.json"
     CMK_JSON=$(python3 -c "import json,sys; m=json.load(open('.cmake-skill-manifest.json')); print(m.get('json_report',''))")
     CMK_MD=$(python3 -c "import json,sys; m=json.load(open('.cmake-skill-manifest.json')); print(m.get('md_report',''))")
-    echo "  json_report: $CMK_JSON"
-    echo "  md_report: $CMK_MD"
+    echo "  json_report: $CMK_JSON (relative)"
+    echo "  md_report: $CMK_MD (relative)"
 else
     echo "  No manifest found, searching common locations..."
-    # Search common output directories
     for dir in cmake_reports build/*/cmake_reports; do
         if [ -f "$dir/cmake_report.json" ]; then
             CMK_JSON="$dir/cmake_report.json"

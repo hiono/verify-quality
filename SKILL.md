@@ -28,8 +28,8 @@ verify-quality [project-root]
 
 ## Report Discovery
 
-- **cmake-skill**: Reads `.cmake-skill-manifest.json` to find report paths
-- **cpp-lint**: Reads from `cpp_lint_reports/` (known location)
+- **cmake-skill**: Reads `.cmake-skill-manifest.json` to find report paths (relative to project root)
+- **cpp-lint**: Reads `.cpp-lint-manifest.json` to find report paths (relative to project root)
 - **Fallback**: If manifest missing, searches common output directories
 
 ## Output
