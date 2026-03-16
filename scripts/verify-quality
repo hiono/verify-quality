@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# verify-quality - Aggregates existing reports from cmake-skill and cpp-lint
+# ============================================================================
+# verify-quality - BASH SCRIPT (NOT Python, do NOT run with uv run)
+# Aggregates existing reports from cmake-skill and cpp-lint
 # This script does NOT execute other skills. It only reads report files.
+# ============================================================================
 set -euo pipefail
 
 PROJECT_ROOT="${1:-.}"
