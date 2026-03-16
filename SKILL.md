@@ -1,12 +1,19 @@
 ---
 name: verify-quality
 description: |
-  統合品質ゲート。cmake-skillとcpp-lintを実行し、
-  結果をquality_reports/に集約する。
-  Use when user needs unified quality check across CMake build and C++ code.
+  Unified quality gate combining cmake-skill and cpp-lint.
+  Executes build pipeline and C++ linting, consolidates results into quality_reports/.
+  Use when Claude needs a single command to run full quality checks on CMake + C++ projects.
+metadata:
+  version: "0.1.0"
+  agent: build
+  models:
+    - copilot/gpt-4.1
+    - copilot/gpt-4o
+    - opencode/big-picle
 ---
 
-## Quality Gate
+# Verify Quality
 
 Run `verify-quality` to execute cmake-skill pipeline + cpp-lint and generate a consolidated report:
 
@@ -20,7 +27,7 @@ verify-quality [project-root] [preset] [scope]
 | preset       | `linux-release` | CMake preset      |
 | scope        | `changed`       | cpp-lint scope    |
 
-### Output
+## Output
 
 Reports are written to `quality_reports/`:
 - `quality_gate_report.md` - Consolidated report
