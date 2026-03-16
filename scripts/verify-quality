@@ -48,20 +48,39 @@ if [ -n "$CMK_MD" ] && [ -f "$CMK_MD" ]; then
     echo "  Copied: $CMK_MD"
 fi
 
-# --- Discover cpp-lint reports ---
+# --- Discover cpp-lint reports via manifest ---
 echo "=== Discovering cpp-lint reports ==="
-CPP_REPORTS="cpp_lint_reports"
-if [ -f "$CPP_REPORTS/lint_report.json" ]; then
-    cp -f "$CPP_REPORTS/lint_report.json" "$QUALITY_DIR/"
-    echo "  Copied: $CPP_REPORTS/lint_report.json"
-    HAS_DATA=1
+CPP_JSON=""
+CPP_MD=""
+if [ -f ".cpp-lint-manifest.json" ]; then
+    echo "  Found manifest: .cpp-lint-manifest.json"
+    CPP_JSON=$(python3 -c "import json,sys; m=json.load(open('.cpp-lint-manifest.json')); print(m.get('json_report',''))")
+    CPP_MD=$(python3 -c "import json,sys; m=json.load(open('.cpp-lint-manifest.json')); print(m.get('md_report',''))")
+    echo "  json_report: $CPP_JSON"
+    echo "  md_report: $CPP_MD"
 else
-    echo "  Missing: $CPP_REPORTS/lint_report.json"
+    echo "  No manifest found, searching common locations..."
+    for dir in cpp_lint_reports .lint; do
+        if [ -f "$dir/lint_report.json" ]; then
+            CPP_JSON="$dir/lint_report.json"
+            CPP_MD="$dir/lint_report.md"
+            echo "  Found: $dir"
+            break
+        fi
+    done
 fi
 
-if [ -f "$CPP_REPORTS/lint_report.md" ]; then
-    cp -f "$CPP_REPORTS/lint_report.md" "$QUALITY_DIR/"
-    echo "  Copied: $CPP_REPORTS/lint_report.md"
+if [ -n "$CPP_JSON" ] && [ -f "$CPP_JSON" ]; then
+    cp -f "$CPP_JSON" "$QUALITY_DIR/lint_report.json"
+    echo "  Copied: $CPP_JSON"
+    HAS_DATA=1
+else
+    echo "  Missing: lint_report.json"
+fi
+
+if [ -n "$CPP_MD" ] && [ -f "$CPP_MD" ]; then
+    cp -f "$CPP_MD" "$QUALITY_DIR/lint_report.md"
+    echo "  Copied: $CPP_MD"
 fi
 
 # --- Generate consolidated report ---
