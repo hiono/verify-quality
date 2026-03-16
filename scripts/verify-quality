@@ -1,49 +1,79 @@
 #!/usr/bin/env bash
-# verify-quality - Unified quality gate combining cmake-skill and cpp-lint
+# verify-quality - Aggregates existing reports from cmake-skill and cpp-lint
+# This script does NOT execute other skills. It only reads report files.
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${1:-.}"
-PRESET="${2:-linux-release}"
-SCOPE="${3:-changed}"
-
 cd "$PROJECT_ROOT"
 
-# Create unified quality reports directory
 QUALITY_DIR="quality_reports"
 mkdir -p "$QUALITY_DIR"
 
-# Run cmake-skill pipeline
-echo "=== Running cmake-skill pipeline ==="
-cmake-skill pipeline --preset "$PRESET" --output-dir cmake_reports || true
+CMK_REPORTS="cmake_reports"
+CPP_REPORTS="cpp_lint_reports"
+HAS_DATA=0
 
-# Run cpp-lint
-echo "=== Running cpp-lint ==="
-cpp-lint "$SCOPE" || true
-
-# Copy reports to quality directory
-cp -f cmake_reports/cmake_report.json "$QUALITY_DIR/" 2>/dev/null || true
-cp -f cmake_reports/cmake_report.md "$QUALITY_DIR/" 2>/dev/null || true
-cp -f cpp_lint_reports/lint_report.json "$QUALITY_DIR/" 2>/dev/null || true
-cp -f cpp_lint_reports/lint_report.md "$QUALITY_DIR/" 2>/dev/null || true
-
-# Generate consolidated report
-echo "# Quality Gate Report" > "$QUALITY_DIR/quality_gate_report.md"
-echo "" >> "$QUALITY_DIR/quality_gate_report.md"
-echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$QUALITY_DIR/quality_gate_report.md"
-echo "" >> "$QUALITY_DIR/quality_gate_report.md"
-
-# Append cmake results
-if [ -f "cmake_report.md" ]; then
-    echo "## CMake Build & Lint" >> "$QUALITY_DIR/quality_gate_report.md"
-    cat "cmake_report.md" >> "$QUALITY_DIR/quality_gate_report.md"
-    echo "" >> "$QUALITY_DIR/quality_gate_report.md"
+# --- Aggregate cmake-skill reports ---
+echo "=== Aggregating cmake-skill reports ==="
+if [ -f "$CMK_REPORTS/cmake_report.json" ]; then
+    cp -f "$CMK_REPORTS/cmake_report.json" "$QUALITY_DIR/"
+    echo "  Found: $CMK_REPORTS/cmake_report.json"
+    HAS_DATA=1
+else
+    echo "  Missing: $CMK_REPORTS/cmake_report.json"
 fi
 
-# Append cpp lint results
-if [ -f "lint_report.md" ]; then
-    echo "## C++ Lint & Format" >> "$QUALITY_DIR/quality_gate_report.md"
-    cat "lint_report.md" >> "$QUALITY_DIR/quality_gate_report.md"
+if [ -f "$CMK_REPORTS/cmake_report.md" ]; then
+    cp -f "$CMK_REPORTS/cmake_report.md" "$QUALITY_DIR/"
+    echo "  Found: $CMK_REPORTS/cmake_report.md"
 fi
 
-echo "=== Quality gate report saved to $QUALITY_DIR/quality_gate_report.md ==="
+# --- Aggregate cpp-lint reports ---
+echo "=== Aggregating cpp-lint reports ==="
+if [ -f "$CPP_REPORTS/lint_report.json" ]; then
+    cp -f "$CPP_REPORTS/lint_report.json" "$QUALITY_DIR/"
+    echo "  Found: $CPP_REPORTS/lint_report.json"
+    HAS_DATA=1
+else
+    echo "  Missing: $CPP_REPORTS/lint_report.json"
+fi
+
+if [ -f "$CPP_REPORTS/lint_report.md" ]; then
+    cp -f "$CPP_REPORTS/lint_report.md" "$QUALITY_DIR/"
+    echo "  Found: $CPP_REPORTS/lint_report.md"
+fi
+
+# --- Generate consolidated report ---
+{
+    echo "# Quality Gate Report"
+    echo ""
+    echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo ""
+
+    if [ -f "$QUALITY_DIR/cmake_report.md" ]; then
+        echo "## CMake Build & Lint"
+        echo ""
+        cat "$QUALITY_DIR/cmake_report.md"
+        echo ""
+    fi
+
+    if [ -f "$QUALITY_DIR/lint_report.md" ]; then
+        echo "## C++ Lint & Format"
+        echo ""
+        cat "$QUALITY_DIR/lint_report.md"
+    fi
+
+    if [ $HAS_DATA -eq 0 ]; then
+        echo "## No Report Data Found"
+        echo ""
+        echo "Run cmake-skill and cpp-lint first to generate reports:"
+        echo "  - cmake-skill pipeline --preset <preset>"
+        echo "  - cpp-lint changed"
+    fi
+} > "$QUALITY_DIR/quality_gate_report.md"
+
+echo ""
+echo "=== Report saved to $QUALITY_DIR/quality_gate_report.md ==="
+
+[ $HAS_DATA -eq 0 ] && exit 1
+exit 0
