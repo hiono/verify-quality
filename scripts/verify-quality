@@ -9,7 +9,8 @@ set -euo pipefail
 PROJECT_ROOT="${1:-.}"
 cd "$PROJECT_ROOT"
 
-QUALITY_DIR="quality_reports"
+AGENTS_DIR="build/.agents"
+QUALITY_DIR="$AGENTS_DIR/quality_reports"
 mkdir -p "$QUALITY_DIR"
 
 HAS_DATA=0
@@ -18,15 +19,15 @@ CMK_MD=""
 
 # --- Discover cmake-skill reports via manifest ---
 echo "=== Discovering cmake-skill reports ==="
-if [ -f ".cmake-skill-manifest.json" ]; then
-    echo "  Found manifest: .cmake-skill-manifest.json"
-    CMK_JSON=$(python3 -c "import json,sys; m=json.load(open('.cmake-skill-manifest.json')); print(m.get('json_report',''))")
-    CMK_MD=$(python3 -c "import json,sys; m=json.load(open('.cmake-skill-manifest.json')); print(m.get('md_report',''))")
+if [ -f "$AGENTS_DIR/cmake-skill-manifest.json" ]; then
+    echo "  Found manifest: $AGENTS_DIR/cmake-skill-manifest.json"
+    CMK_JSON=$(python3 -c "import json,sys; m=json.load(open('$AGENTS_DIR/cmake-skill-manifest.json')); print(m.get('json_report',''))")
+    CMK_MD=$(python3 -c "import json,sys; m=json.load(open('$AGENTS_DIR/cmake-skill-manifest.json')); print(m.get('md_report',''))")
     echo "  json_report: $CMK_JSON (relative)"
     echo "  md_report: $CMK_MD (relative)"
 else
     echo "  No manifest found, searching common locations..."
-    for dir in cmake_reports build/*/cmake_reports; do
+    for dir in build/*/cmake_reports; do
         if [ -f "$dir/cmake_report.json" ]; then
             CMK_JSON="$dir/cmake_report.json"
             CMK_MD="$dir/cmake_report.md"
@@ -54,15 +55,15 @@ fi
 echo "=== Discovering cpp-lint reports ==="
 CPP_JSON=""
 CPP_MD=""
-if [ -f ".cpp-lint-manifest.json" ]; then
-    echo "  Found manifest: .cpp-lint-manifest.json"
-    CPP_JSON=$(python3 -c "import json,sys; m=json.load(open('.cpp-lint-manifest.json')); print(m.get('json_report',''))")
-    CPP_MD=$(python3 -c "import json,sys; m=json.load(open('.cpp-lint-manifest.json')); print(m.get('md_report',''))")
-    echo "  json_report: $CPP_JSON"
-    echo "  md_report: $CPP_MD"
+if [ -f "$AGENTS_DIR/cpp-lint-manifest.json" ]; then
+    echo "  Found manifest: $AGENTS_DIR/cpp-lint-manifest.json"
+    CPP_JSON=$(python3 -c "import json,sys; m=json.load(open('$AGENTS_DIR/cpp-lint-manifest.json')); print(m.get('json_report',''))")
+    CPP_MD=$(python3 -c "import json,sys; m=json.load(open('$AGENTS_DIR/cpp-lint-manifest.json')); print(m.get('md_report',''))")
+    echo "  json_report: $CPP_JSON (relative)"
+    echo "  md_report: $CPP_MD (relative)"
 else
     echo "  No manifest found, searching common locations..."
-    for dir in cpp_lint_reports .lint; do
+    for dir in build/.agents/cpp_lint_reports; do
         if [ -f "$dir/lint_report.json" ]; then
             CPP_JSON="$dir/lint_report.json"
             CPP_MD="$dir/lint_report.md"

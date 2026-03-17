@@ -28,13 +28,13 @@ verify-quality [project-root]
 
 ## Report Discovery
 
-- **cmake-skill**: Reads `.cmake-skill-manifest.json` to find report paths (relative to project root)
-- **cpp-lint**: Reads `.cpp-lint-manifest.json` to find report paths (relative to project root)
-- **Fallback**: If manifest missing, searches common output directories
+- **cmake-skill**: via `build/.agents/cmake-skill-manifest.json` (relative paths)
+- **cpp-lint**: via `build/.agents/cpp-lint-manifest.json` (relative paths)
+- **Fallback**: If manifest missing, searches `build/*/cmake_reports/` and `build/.agents/cpp_lint_reports/`
 
 ## Output
 
-Reports are written to `quality_reports/`:
+Reports are written to `build/.agents/quality_reports/`:
 - `quality_gate_report.md` - Consolidated report
 - `cmake_report.json` - CMake diagnostics (copied)
 - `lint_report.json` - C++ lint diagnostics (copied)
